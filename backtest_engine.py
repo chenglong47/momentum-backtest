@@ -1,11 +1,8 @@
 """
-Week 2: Backtest Engine
-=======================
+
 Constructs a long/short momentum portfolio from signal ranks,
 applies transaction costs, and computes monthly P&L.
-
 Run after data_pipeline.py has populated the data/ directory.
-
 Dependencies:
     pip install yfinance pandas numpy requests beautifulsoup4 pyarrow
 """
@@ -14,7 +11,7 @@ import pandas as pd
 import numpy as np
 import os
 
-# ── CONFIG ────────────────────────────────────────────────────────────────────
+# CONFIG
 DATA_DIR          = "data"
 TOP_DECILE        = 0.9      # long stocks ranked above 90th percentile
 BOTTOM_DECILE     = 0.1      # short stocks ranked below 10th percentile
@@ -22,7 +19,7 @@ TRANSACTION_COST  = 0.001    # 10 bps per side (0.1%) — conservative estimate
 BENCHMARK_TICKER  = "^GSPC"  # S&P 500 index
 
 
-# ── STEP 1: LOAD PIPELINE OUTPUTS ─────────────────────────────────────────────
+# STEP 1: LOAD PIPELINE OUTPUTS 
 def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Loads monthly returns and signal ranks produced by data_pipeline.py.
@@ -33,7 +30,7 @@ def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     return monthly_ret, signal_ranks
 
 
-# ── STEP 2: CONSTRUCT PORTFOLIO WEIGHTS ───────────────────────────────────────
+# STEP 2: CONSTRUCT PORTFOLIO WEIGHTS
 def compute_weights(signal_ranks: pd.DataFrame) -> pd.DataFrame:
     """
     Each month, assigns portfolio weights based on momentum rank:
@@ -43,9 +40,6 @@ def compute_weights(signal_ranks: pd.DataFrame) -> pd.DataFrame:
 
     Equal weighting within deciles is a deliberate choice — it avoids
     concentration risk and is standard in academic momentum studies.
-
-    Interview note: real implementations often use rank-weighted or
-    optimized weights, but equal-weight is the cleanest baseline.
     """
     weights = pd.DataFrame(0.0, index=signal_ranks.index, columns=signal_ranks.columns)
 
@@ -78,9 +72,6 @@ def compute_transaction_costs(weights: pd.DataFrame) -> pd.Series:
     Turnover measures how much the portfolio changes each rebalance.
     High turnover erodes returns — this is why momentum strategies
     are typically run monthly, not weekly.
-
-    Interview note: ignoring transaction costs is one of the most
-    common mistakes in amateur backtests. Always model them.
     """
     # Weight change = new weight - old weight (shift by 1 month)
     weight_changes = weights.diff().abs()
@@ -94,7 +85,7 @@ def compute_transaction_costs(weights: pd.DataFrame) -> pd.Series:
     return costs
 
 
-# ── STEP 4: COMPUTE PORTFOLIO RETURNS ─────────────────────────────────────────
+# STEP 4: COMPUTE PORTFOLIO RETURNS
 def compute_portfolio_returns(
     weights: pd.DataFrame,
     monthly_ret: pd.DataFrame,
@@ -129,7 +120,7 @@ def compute_portfolio_returns(
     return net_returns
 
 
-# ── STEP 5: FETCH BENCHMARK RETURNS ───────────────────────────────────────────
+# STEP 5: FETCH BENCHMARK RETURNS 
 def get_benchmark_returns(start: str, end: str) -> pd.Series:
     """
     Downloads S&P 500 monthly returns as the benchmark.
@@ -142,7 +133,7 @@ def get_benchmark_returns(start: str, end: str) -> pd.Series:
     return monthly
 
 
-# ── STEP 6: PERFORMANCE METRICS ───────────────────────────────────────────────
+#STEP 6: PERFORMANCE METRICS 
 def compute_metrics(returns: pd.Series, benchmark: pd.Series) -> dict:
     """
     Computes the core performance statistics used by quant funds
@@ -200,10 +191,10 @@ def compute_metrics(returns: pd.Series, benchmark: pd.Series) -> dict:
     return metrics, strat, bench
 
 
-# ── MAIN ──────────────────────────────────────────────────────────────────────
+# MAIN 
 def run_backtest() -> dict:
     print("=" * 60)
-    print("MOMENTUM BACKTEST — WEEK 2: BACKTEST ENGINE")
+    print("MOMENTUM BACKTEST —  BACKTEST ENGINE")
     print("=" * 60)
 
     monthly_ret, signal_ranks = load_data()

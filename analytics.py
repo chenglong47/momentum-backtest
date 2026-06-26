@@ -1,12 +1,9 @@
 """
-Week 3: Analytics & Visualization
-===================================
 Loads backtest results and produces publication-quality charts:
   1. Cumulative returns vs S&P 500 benchmark
   2. Monthly return distribution
   3. Drawdown over time
   4. Rolling 12-month Sharpe ratio
-
 Saves all charts to charts/ directory.
 
 Dependencies:
@@ -24,7 +21,7 @@ DATA_DIR   = "data"
 CHARTS_DIR = "charts"
 os.makedirs(CHARTS_DIR, exist_ok=True)
 
-# ── STYLE ─────────────────────────────────────────────────────────────────────
+#STYLE 
 plt.rcParams.update({
     "figure.facecolor":  "#0d1117",
     "axes.facecolor":    "#0d1117",
@@ -50,7 +47,7 @@ YELLOW = "#d29922"
 GRAY   = "#8b949e"
 
 
-# ── LOAD DATA ─────────────────────────────────────────────────────────────────
+#  LOAD DATA 
 def load_results() -> tuple[pd.Series, pd.Series]:
     strat = pd.read_csv(
         os.path.join(DATA_DIR, "strategy_returns.csv"),
@@ -65,20 +62,20 @@ def load_results() -> tuple[pd.Series, pd.Series]:
     return aligned["Strategy"], aligned["S&P 500"]
 
 
-# ── HELPER: DRAWDOWN SERIES ───────────────────────────────────────────────────
+#HELPER: DRAWDOWN SERIES 
 def drawdown_series(returns: pd.Series) -> pd.Series:
     cum = (1 + returns).cumprod()
     return (cum - cum.cummax()) / cum.cummax()
 
 
-# ── HELPER: ROLLING SHARPE ────────────────────────────────────────────────────
+#HELPER: ROLLING SHARPE 
 def rolling_sharpe(returns: pd.Series, window: int = 12) -> pd.Series:
     roll_mean = returns.rolling(window).mean() * 12
     roll_std  = returns.rolling(window).std() * np.sqrt(12)
     return roll_mean / roll_std
 
 
-# ── CHART 1: CUMULATIVE RETURNS ───────────────────────────────────────────────
+# CHART 1: CUMULATIVE RETURNS 
 def plot_cumulative_returns(strat: pd.Series, bench: pd.Series):
     cum_strat = (1 + strat).cumprod()
     cum_bench = (1 + bench).cumprod()
@@ -116,7 +113,7 @@ def plot_cumulative_returns(strat: pd.Series, bench: pd.Series):
     print(f"Saved: {path}")
 
 
-# ── CHART 2: MONTHLY RETURN DISTRIBUTION ─────────────────────────────────────
+#  CHART 2: MONTHLY RETURN DISTRIBUTION 
 def plot_return_distribution(strat: pd.Series, bench: pd.Series):
     fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -149,7 +146,7 @@ def plot_return_distribution(strat: pd.Series, bench: pd.Series):
     print(f"Saved: {path}")
 
 
-# ── CHART 3: DRAWDOWN ─────────────────────────────────────────────────────────
+# CHART 3: DRAWDOWN 
 def plot_drawdown(strat: pd.Series, bench: pd.Series):
     dd_strat = drawdown_series(strat)
     dd_bench = drawdown_series(bench)
@@ -181,7 +178,7 @@ def plot_drawdown(strat: pd.Series, bench: pd.Series):
     print(f"Saved: {path}")
 
 
-# ── CHART 4: ROLLING 12-MONTH SHARPE ─────────────────────────────────────────
+# HART 4: ROLLING 12-MONTH SHARPE 
 def plot_rolling_sharpe(strat: pd.Series):
     roll = rolling_sharpe(strat, window=12).dropna()
 
@@ -206,7 +203,7 @@ def plot_rolling_sharpe(strat: pd.Series):
     print(f"Saved: {path}")
 
 
-# ── CHART 5: ANNUAL RETURNS BAR CHART ────────────────────────────────────────
+# CHART 5: ANNUAL RETURNS BAR CHART
 def plot_annual_returns(strat: pd.Series, bench: pd.Series):
     ann_strat = strat.resample("YE").apply(lambda r: (1 + r).prod() - 1)
     ann_bench = bench.resample("YE").apply(lambda r: (1 + r).prod() - 1)
@@ -239,7 +236,7 @@ def plot_annual_returns(strat: pd.Series, bench: pd.Series):
     print(f"Saved: {path}")
 
 
-# ── SUMMARY TABLE ─────────────────────────────────────────────────────────────
+# SUMMARY TABLE 
 def print_summary(strat: pd.Series, bench: pd.Series):
     """Prints a clean summary table to terminal."""
     def ann_ret(r): return (1 + r).prod() ** (12 / len(r)) - 1
@@ -273,10 +270,10 @@ def print_summary(strat: pd.Series, bench: pd.Series):
     print("═" * 52)
 
 
-# ── MAIN ──────────────────────────────────────────────────────────────────────
+# MAIN 
 if __name__ == "__main__":
     print("=" * 60)
-    print("MOMENTUM BACKTEST — WEEK 3: ANALYTICS & VISUALIZATION")
+    print("MOMENTUM BACKTEST — ANALYTICS & VISUALIZATION")
     print("=" * 60)
 
     strat, bench = load_results()

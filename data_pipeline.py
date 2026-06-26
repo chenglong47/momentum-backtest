@@ -1,11 +1,6 @@
 """
-Week 1: Data Pipeline
-=====================
 Fetches S&P 500 constituent price history, cleans it, and computes
 monthly returns + momentum signals ready for the backtest engine.
-
-Dependencies:
-    pip install yfinance pandas numpy requests beautifulsoup4
 """
 
 import yfinance as yf
@@ -16,25 +11,21 @@ from bs4 import BeautifulSoup
 import time
 import os
 
-# ── CONFIG ────────────────────────────────────────────────────────────────────
+#CONFIG 
 START_DATE   = "2014-01-01"   # 10 years of history
 END_DATE     = "2024-12-31"
-DATA_DIR     = "data"         # where we cache raw + processed files
+DATA_DIR     = "data"         # cache raw + processed files
 LOOKBACK     = 12             # momentum lookback in months (12-1 = 11 usable)
 SKIP_RECENT  = 1              # skip most recent month (avoids short-term reversal)
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
 
-# ── STEP 1: GET S&P 500 TICKERS FROM WIKIPEDIA ────────────────────────────────
+# GET S&P 500 TICKERS FROM WIKIPEDIA
 def get_sp500_tickers() -> list[str]:
     """
     Scrapes current S&P 500 constituents from Wikipedia.
-    Returns a list of ticker strings (e.g. ['AAPL', 'MSFT', ...]).
-
-    Note for interviews: in production you'd use a point-in-time
-    constituent list to avoid survivorship bias. This is a known
-    simplification — be ready to discuss it.
+    Returns a list of ticker strings
     """
     url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
     resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -50,11 +41,11 @@ def get_sp500_tickers() -> list[str]:
     return tickers
 
 
-# ── STEP 2: DOWNLOAD PRICE DATA ────────────────────────────────────────────────
+# DOWNLOAD PRICE DATA 
 def download_prices(tickers: list[str]) -> pd.DataFrame:
     """
     Downloads adjusted closing prices for all tickers.
-    Uses yfinance's batch download (much faster than one-by-one).
+    Uses yfinance's batch download 
     Caches to disk so you don't re-download on every run.
 
     Returns a DataFrame: rows = dates, columns = tickers.
@@ -81,16 +72,13 @@ def download_prices(tickers: list[str]) -> pd.DataFrame:
     return prices
 
 
-# ── STEP 3: CLEAN THE DATA ────────────────────────────────────────────────────
+#CLEAN THE DATA 
 def clean_prices(prices: pd.DataFrame, min_history_pct: float = 0.8) -> pd.DataFrame:
     """
     Removes tickers with too much missing data and forward-fills
     short gaps (e.g. trading halts, delistings).
 
     min_history_pct: drop any ticker missing more than this fraction of days.
-
-    Interview note: data quality is a huge deal in quant finance.
-    Real shops spend enormous effort on cleaning pipelines.
     """
     total_days = len(prices)
     min_days = int(total_days * min_history_pct)
@@ -113,14 +101,12 @@ def clean_prices(prices: pd.DataFrame, min_history_pct: float = 0.8) -> pd.DataF
     return prices
 
 
-# ── STEP 4: COMPUTE MONTHLY RETURNS ──────────────────────────────────────────
+# STEP 4: COMPUTE MONTHLY RETURNS
 def compute_monthly_returns(prices: pd.DataFrame) -> pd.DataFrame:
     """
     Resamples daily prices to month-end and computes simple monthly returns.
-
     We use month-end ('ME') resampling — each row represents the return
     earned during that calendar month.
-
     Returns DataFrame: rows = month-end dates, columns = tickers.
     """
     # Take last price of each month
@@ -136,7 +122,7 @@ def compute_monthly_returns(prices: pd.DataFrame) -> pd.DataFrame:
     return monthly_returns
 
 
-# ── STEP 5: COMPUTE MOMENTUM SIGNAL ──────────────────────────────────────────
+# COMPUTE MOMENTUM SIGNAL
 def compute_momentum(monthly_returns: pd.DataFrame) -> pd.DataFrame:
     """
     Computes the classic 12-1 momentum signal for each stock each month.
@@ -148,8 +134,6 @@ def compute_momentum(monthly_returns: pd.DataFrame) -> pd.DataFrame:
     how much did this stock return?" Stocks in the top decile are 'winners',
     bottom decile are 'losers'.
 
-    Interview note: Jegadeesh & Titman (1993) is the foundational paper.
-    D.E. Shaw interviewers will respect that you know the academic basis.
     """
     # rolling_product(1 + r) - 1 over a window gives cumulative return
     # Window = LOOKBACK months, but we shift by SKIP_RECENT to exclude last month
@@ -157,15 +141,15 @@ def compute_momentum(monthly_returns: pd.DataFrame) -> pd.DataFrame:
         return (1 + r).prod() - 1
 
     # For each month t, compute cumulative return from t-LOOKBACK to t-SKIP_RECENT-1
-    momentum = monthly_returns.shift(SKIP_RECENT).rolling(
-        window=LOOKBACK - SKIP_RECENT
-    ).apply(cum_return, raw=True)
+    momentum = monthly_returns.rolling(
+    window=LOOKBACK - SKIP_RECENT
+).apply(cum_return, raw=True).shift(SKIP_RECENT)
 
     print(f"Momentum signal computed: {momentum.notna().sum().sum():,} valid observations")
     return momentum
 
 
-# ── STEP 6: COMPUTE CROSS-SECTIONAL RANKS ────────────────────────────────────
+# STEP 6: COMPUTE CROSS-SECTIONAL RANKS 
 def compute_signal_ranks(momentum: pd.DataFrame) -> pd.DataFrame:
     """
     Converts raw momentum values to cross-sectional percentile ranks each month.
@@ -181,14 +165,14 @@ def compute_signal_ranks(momentum: pd.DataFrame) -> pd.DataFrame:
     return ranks
 
 
-# ── MAIN ──────────────────────────────────────────────────────────────────────
+# MAIN 
 def build_pipeline() -> dict:
     """
     Runs the full pipeline and returns all intermediate outputs.
-    This is what the backtest engine (Week 2) will import.
+    This is what the backtest engine will import.
     """
     print("=" * 60)
-    print("MOMENTUM BACKTEST — WEEK 1: DATA PIPELINE")
+    print("MOMENTUM BACKTEST — DATA PIPELINE")
     print("=" * 60)
 
     tickers        = get_sp500_tickers()
@@ -221,4 +205,4 @@ def build_pipeline() -> dict:
 
 if __name__ == "__main__":
     data = build_pipeline()
-    print("\nPipeline complete. Ready for Week 2: Backtest Engine.")
+    print("\nPipeline complete. Ready for Backtest Engine.")
